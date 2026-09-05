@@ -1,0 +1,238 @@
+@import url('https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700&display=swap');
+
+body {
+    font-family: 'Anuphan', sans-serif;
+    background-color: #f0f2f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 15px;
+    box-sizing: border-box;
+    font-size: 19px;
+    color: #002454;
+}
+
+.container {
+    background: #ffffff;
+    padding: 25px 20px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    width: 100%;
+    max-width: 550px;
+    border-top: 8px solid #002454; 
+}
+
+h2, label, .part-title { color: #002454; }
+
+h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    font-weight: normal;
+    font-size: 28px;
+}
+
+.form-step { display: none; }
+.form-step.active { display: block; }
+
+.part-title {
+    font-size: 22px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #002454; 
+    display: inline-block;
+    padding-bottom: 3px;
+    font-weight: bold;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 20px;
+}
+
+input[type="text"], input[type="date"], input[type="time"], input[type="tel"],
+input[type="number"], select, textarea, input[type="file"] {
+    width: 100%;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 2px solid #ccc;
+    border-radius: 12px;
+    box-sizing: border-box;
+    font-family: 'Anuphan', sans-serif;
+    font-size: 19px;
+    transition: all 0.3s;
+    background-color: #fff;
+    color: #002454;
+}
+
+textarea { resize: vertical; }
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #002454; 
+    box-shadow: 0 0 8px rgba(0, 36, 84, 0.2);
+}
+
+.radio-group {
+    display: flex;
+    flex-direction: column; 
+    gap: 12px;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.radio-group input[type="radio"] { display: none; }
+
+.btn-choice {
+    display: block;
+    width: 100%;
+    padding: 16px 20px;
+    background: #fff;
+    border: 3px solid #ddd;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 19px;
+    text-align: left; 
+    transition: all 0.2s ease;
+    color: #002454;
+    box-sizing: border-box;
+    user-select: none;
+}
+
+.radio-group input[type="radio"]:checked + .btn-choice {
+    background-color: #002454; 
+    color: #fff;
+    border-color: #002454;
+    transform: scale(1.02);
+}
+
+.time-row, .geo-row {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+#map {
+    height: 260px;
+    width: 100%;
+    border-radius: 12px;
+    border: 2px solid #ccc;
+    margin-bottom: 20px;
+    z-index: 1; 
+}
+
+.btn-row {
+    display: flex;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.btn-nav, button[type="submit"] {
+    flex: 1;
+    padding: 15px;
+    font-family: 'Anuphan', sans-serif;
+    font-size: 20px;
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: 0.3s;
+    text-align: center;
+}
+
+.btn-next, button[type="submit"] {
+    background-color: #002454;
+    color: white;
+}
+
+.btn-back {
+    background-color: #e0e0e0;
+    color: #002454;
+}
+
+button[type="submit"]:hover, .btn-next:hover {
+    background-color: #001633;
+}
+
+button[type="submit"]:disabled {
+    background-color: #999;
+    cursor: not-allowed;
+}
+
+.dynamic-section {
+    display: none;
+    background: #fcfcfc;
+    padding: 15px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    border: 2px dashed #ddd; 
+}
+
+@media (min-width: 480px) {
+    .time-row, .geo-row { flex-direction: row; gap: 12px; }
+    .time-row div, .geo-row div { flex: 1; }
+}
+
+#dashboardMap {
+    height: 380px;
+    width: 100%;
+    border-radius: 12px;
+    border: 2px solid #e5e7eb;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    z-index: 1; 
+}
+
+.map-popup-content {
+    font-family: 'Anuphan', sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+}
+.map-popup-content strong {
+    color: #002454;
+}
+
+.autocomplete-container {
+    position: relative;
+    display: block;
+    width: 100%;
+}
+
+.autocomplete-items {
+    position: absolute;
+    border: 2px solid #ccc;
+    border-top: none;
+    z-index: 99;
+    top: 55px; 
+    left: 0;
+    right: 0;
+    background-color: #fff;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.autocomplete-items div {
+    padding: 12px 15px;
+    cursor: pointer;
+    background-color: #fff;
+    border-bottom: 1px solid #eee;
+    font-size: 19px;
+    font-family: 'Anuphan', sans-serif;
+    transition: 0.2s;
+}
+
+.autocomplete-items div:last-child {
+    border-bottom: none;
+    border-radius: 0 0 12px 12px;
+}
+
+.autocomplete-items div:hover, .autocomplete-active {
+    background-color: #f0f2f5 !important;
+}
+
+.autocomplete-items strong {
+    color: #002454;
+    text-decoration: underline;
+}

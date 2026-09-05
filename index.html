@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบรายงานเหตุการณ์แจ้งเหตุ ม.มหิดล</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h2>ระบบรายงานเหตุการณ์แจ้งเหตุ ม.มหิดล</h2>
+        
+        <form id="incidentForm" novalidate>
+            <!-- 🌟 เพิ่ม 2 ปุ่มอัจฉริยะ (ผู้ช่วยเสียง & คำอธิบาย) ตรงนี้ -->
+        <div style="display: flex; gap: 10px; margin-bottom: 20px; justify-content: center;">
+            <button type="button" onclick="startAIVoice()" style="background-color: #f5f5f5; color: #1976d2; border: 2px solid #1976d2; padding: 10px 15px; border-radius: 20px; font-family: inherit; font-size: 16px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: bold; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                🎙️ AI ช่วยกรอกด้วยเสียง
+            </button>
+            <button type="button" onclick="showReportGuide()" style="background-color: #fff; color: #ff9800; border: 2px solid #ff9800; padding: 10px 15px; border-radius: 20px; font-family: inherit; font-size: 16px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: bold; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                📖 คำอธิบายการรายงาน
+            </button>
+        </div>
+            
+            <div class="form-step active" id="step-1">
+                <div class="part-title">พาร์ท 1: ข้อมูลทั่วไปและประเภทเหตุการณ์</div>
+                
+                <label>ชื่อผู้แจ้ง:</label>
+                <input type="text" id="reporterName" required>
+
+                <label>เบอร์โทรศัพท์ผู้แจ้ง:</label>
+                <input type="tel" id="reporterPhone" required>
+
+                <div id="reportChannelSection">
+                    <label>ช่องทางรับแจ้ง:</label>
+                    <div class="radio-group">
+                        <input type="radio" id="via_radio" name="reportedVia" value="วิทยุสื่อสาร" checked>
+                        <label for="via_radio" class="btn-choice">วิทยุสื่อสาร</label>
+                        <input type="radio" id="via_phone" name="reportedVia" value="ทางโทรศัพท์">
+                        <label for="via_phone" class="btn-choice">ทางโทรศัพท์</label>
+                    </div>
+                </div>
+
+                <div id="reporterTypeAndDeptSection">
+                    <label>ประเภทผู้แจ้ง:</label>
+                    <div class="radio-group" id="reporterTypeGroup">
+                        <input type="radio" id="type_guard" name="reporterType" value="รปภ." checked>
+                        <label for="type_guard" class="btn-choice">รปภ.</label>
+                        
+                        <div id="otherReporterTypes" style="display: none; flex-direction: column; gap: 12px; width: 100%;">
+                            <input type="radio" id="type_student" name="reporterType" value="นักศึกษา">
+                            <label for="type_student" class="btn-choice">นักศึกษา</label>
+                            <input type="radio" id="type_staff" name="reporterType" value="บุคลากร">
+                            <label for="type_staff" class="btn-choice">บุคลากร</label>
+                            <input type="radio" id="type_outsource" name="reporterType" value="Outsource">
+                            <label for="type_outsource" class="btn-choice">Outsource</label>
+                            <input type="radio" id="type_outside" name="reporterType" value="บุคคลภายนอก">
+                            <label for="type_outside" class="btn-choice">บุคคลภายนอก</label>
+                        </div>
+                    </div>
+                    <label style="margin-top: 15px;">คณะ/ส่วนงานของผู้แจ้ง:</label>
+                    <input type="text" id="reporterDepartment" required placeholder="ระบุคณะ หรือหน่วยงานของผู้แจ้ง">
+                </div>
+                
+                <label id="lbl_incidentDate">วันที่เกิดเหตุ:</label>
+                <input type="date" id="incidentDate" required>
+
+                <label>เลือกประเภทเหตุการณ์:</label>
+                <select id="incidentType" required>
+                    <option value="" disabled selected>กรุณาเลือกประเภทเหตุการณ์</option>
+                    <option value="ปรับ รปภ.">ปรับ รปภ.</option>
+                    <option value="อุบัติเหตุจากยานพาหนะ">อุบัติเหตุจากยานพาหนะ</option>
+                    <option value="จับสัตว์เลื้อยคลาน">จับสัตว์เลื้อยคลาน</option>
+                    <option value="อุบัติเหตุจากการทำงาน">อุบัติเหตุจากการทำงาน</option>
+                    <option value="อุบัติเหตุทั่วไป">อุบัติเหตุทั่วไป</option>
+                    <option value="รับส่งผู้ป่วย">รับส่งผู้ป่วย</option>
+                    <option value="เพลิงไหม้">เพลิงไหม้</option>
+                    <option value="ไฟฟ้าลัดวงจร">ไฟฟ้าลัดวงจร</option>
+                    <option value="ต้นไม้ล้ม">ต้นไม้ล้ม</option>
+                    <option value="ลักทรัพย์">ลักทรัพย์</option>
+                    <option value="ทะเลาะวิวาท">ทะเลาะวิวาท</option>
+                    <option value="ช่วยเหลือพ่วงแบตเตอรรี่">ช่วยเหลือพ่วงแบตเตอรรี่</option>
+                    <option value="อื่นๆ">อื่นๆ</option>
+                </select>
+
+                <div class="time-row">
+                    <div id="div_incidentTime"><label id="lbl_incidentTime">เวลาเกิดเหตุ:</label><input type="text" id="incidentTime" class="time-auto-format" placeholder="00:00" inputmode="numeric" maxlength="5" required></div>
+                    <div id="div_reportedTime"><label>เวลารับแจ้ง:</label><input type="text" id="reportedTime" class="time-auto-format" placeholder="00:00" inputmode="numeric" maxlength="5" required></div>
+                    <div id="div_arrivalTime"><label>เวลาเข้าถึงที่เกิดเหตุ:</label><input type="text" id="arrivalTime" class="time-auto-format" placeholder="00:00" inputmode="numeric" maxlength="5" required></div>
+                </div>
+
+                <div id="locationSection">
+                    <label id="lbl_location">สถานที่เกิดเหตุ (ระบุเป็นข้อความ):</label>
+                    <input type="text" id="location" required placeholder="เช่น หน้าอาคารอธิการบดี">
+                </div>
+
+                <div id="mapSection">
+                    <label>ปักหมุดพิกัดในแผนที่:</label>
+                    <div id="map"></div>
+                    <div class="geo-row">
+                        <div><label>ละติจูด:</label><input type="text" id="latitude" readonly required placeholder="คลิกบนแผนที่"></div>
+                        <div><label>ลองติจูด:</label><input type="text" id="longitude" readonly required placeholder="คลิกบนแผนที่"></div>
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <button type="button" class="btn-nav btn-next" onclick="navigateStep('step-1', 'forward')">ถัดไป</button>
+                </div>
+            </div>
+
+            <div class="form-step" id="step-2">
+                <div class="part-title">พาร์ท 2: ข้อมูลยานพาหนะ (คู่กรณี)</div>
+                
+                <div id="p2_q1" class="sub-step active-sub-step">
+                    <label>1. รถคันที่ 1 คือรถอะไร?</label>
+                    <div class="radio-group">
+                        <input type="radio" id="v1_moto" name="v1Type" value="รถจักรยานยนต์"><label for="v1_moto" class="btn-choice">รถจักรยานยนต์</label>
+                        <input type="radio" id="v1_bike" name="v1Type" value="จักรยาน"><label for="v1_bike" class="btn-choice">จักรยาน</label>
+                        <input type="radio" id="v1_car" name="v1Type" value="รถยนต์"><label for="v1_car" class="btn-choice">รถยนต์</label>
+                        <input type="radio" id="v1_bus" name="v1Type" value="รถบัส"><label for="v1_bus" class="btn-choice">รถบัส</label>
+                        <input type="radio" id="v1_tram" name="v1Type" value="รถราง"><label for="v1_tram" class="btn-choice">รถราง</label>
+                    </div>
+                    <div class="btn-row" style="margin-top: 20px;">
+                        <button type="button" class="btn-nav btn-back" onclick="navigateStep('step-2', 'backward')">ย้อนกลับ</button>
+                    </div>
+                </div>
+
+                <div id="p2_q2" class="sub-step" style="display:none;">
+                    <label>2. รถคันที่ 1 ใครขับ?</label>
+                    <div class="radio-group">
+                        <input type="radio" id="d1_student" name="driver1" value="นักศึกษา"><label for="d1_student" class="btn-choice">นักศึกษา</label>
+                        <input type="radio" id="d1_staff" name="driver1" value="บุคลากร"><label for="d1_staff" class="btn-choice">บุคลากร</label>
+                        <input type="radio" id="d1_outsource" name="driver1" value="Outsource"><label for="d1_outsource" class="btn-choice">Outsource</label>
+                        <input type="radio" id="d1_outside" name="driver1" value="บุคคลภายนอก"><label for="d1_outside" class="btn-choice">บุคคลภายนอก</label>
+                    </div>
+                    <div class="btn-row" style="margin-top: 20px;">
+                        <button type="button" class="btn-nav btn-back" onclick="goToP2SubStep(1)">ย้อนกลับ</button>
+                    </div>
+                </div>
+
+                <div id="p2_q3" class="sub-step" style="display:none;">
+                    <label>3. ชนกับรถคันที่ 2 คืออะไร?</label>
+                    <div class="radio-group">
+                        <span id="v2_self_wrapper" style="display:none;">
+                            <input type="radio" id="v2_self" name="v2Type" value="ล้มเอง"><label for="v2_self" class="btn-choice">ล้มเอง (ไม่มีคู่กรณี)</label>
+                        </span>
+                        <input type="radio" id="v2_prop" name="v2Type" value="ชนทรัพย์สิน"><label for="v2_prop" class="btn-choice">ชนทรัพย์สิน</label>
+                        <input type="radio" id="v2_moto" name="v2Type" value="รถจักรยานยนต์"><label for="v2_moto" class="btn-choice">รถจักรยานยนต์</label>
+                        <input type="radio" id="v2_bike" name="v2Type" value="จักรยาน"><label for="v2_bike" class="btn-choice">จักรยาน</label>
+                        <input type="radio" id="v2_car" name="v2Type" value="รถยนต์"><label for="v2_car" class="btn-choice">รถยนต์</label>
+                        <input type="radio" id="v2_bus" name="v2Type" value="รถบัส"><label for="v2_bus" class="btn-choice">รถบัส</label>
+                        <input type="radio" id="v2_tram" name="v2Type" value="รถราง"><label for="v2_tram" class="btn-choice">รถราง</label>
+                    </div>
+                    <div class="btn-row" style="margin-top: 20px;">
+                        <button type="button" class="btn-nav btn-back" onclick="goToP2SubStep(2)">ย้อนกลับ</button>
+                        <button type="button" id="btn_skip_to_p3" class="btn-nav btn-next" style="display:none;" onclick="navigateStep('step-2', 'forward')">ถัดไป</button>
+                    </div>
+                </div>
+
+                <div id="p2_q4" class="sub-step" style="display:none;">
+                    <label>4. รถคันที่ 2 ใครขับ? (หากมีคู่กรณี)</label>
+                    <div class="radio-group">
+                        <input type="radio" id="d2_student" name="driver2" value="นักศึกษา"><label for="d2_student" class="btn-choice">นักศึกษา</label>
+                        <input type="radio" id="d2_staff" name="driver2" value="บุคลากร"><label for="d2_staff" class="btn-choice">บุคลากร</label>
+                        <input type="radio" id="d2_outsource" name="driver2" value="Outsource"><label for="d2_outsource" class="btn-choice">Outsource</label>
+                        <input type="radio" id="d2_outside" name="driver2" value="บุคคลภายนอก"><label for="d2_outside" class="btn-choice">บุคคลภายนอก</label>
+                    </div>
+                    <div class="btn-row" style="margin-top: 20px;">
+                        <button type="button" class="btn-nav btn-back" onclick="goToP2SubStep(3)">ย้อนกลับ</button>
+                        <button type="button" class="btn-nav btn-next" onclick="navigateStep('step-2', 'forward')">ถัดไป</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- พาร์ทข้อมูลสัตว์เลื้อยคลาน -->
+            <div class="form-step" id="step-animal">
+                <div class="part-title">ข้อมูลการจับสัตว์เลื้อยคลาน/สัตว์อันตราย</div>
+                
+                <label>ชนิดสัตว์ที่พบคืออะไร?</label>
+                <input type="text" id="animalType" placeholder="เช่น งูเหลือม, ตัวเงินตัวทอง, ต่อหัวเสือ" required>
+                
+                <label>นำสัตว์ไปปล่อยที่ไหน?</label>
+                <input type="text" id="animalReleaseLocation" placeholder="เช่น ป่าด้านหลังคณะ..., หรือ มอบให้กู้ภัย" required>
+                
+                <div class="btn-row">
+                    <button type="button" class="btn-nav btn-back" onclick="navigateStep('step-animal', 'backward')">ย้อนกลับ</button>
+                    <button type="button" class="btn-nav btn-next" onclick="navigateStep('step-animal', 'forward')">ถัดไป</button>
+                </div>
+            </div>
+
+            <!-- พาร์ทข้อมูล ปรับ รปภ. -->
+            <div class="form-step" id="step-guard-penalty">
+                <div class="part-title">ข้อมูลการปรับ รปภ.</div>
+                
+                <!-- 🌟 เพิ่มช่องชื่อ รปภ. ตรงนี้ -->
+                <label>ชื่อ รปภ. ที่ถูกปรับ:</label>
+                <input type="text" id="guardName" placeholder="ระบุชื่อ-นามสกุล รปภ.">
+
+                <label>หน่วยงาน:</label>
+                <div class="radio-group">
+                    <input type="radio" id="unit_central" name="guardUnit" value="ส่วนกลาง"><label for="unit_central" class="btn-choice">ส่วนกลาง</label>
+                    <input type="radio" id="unit_sittha" name="guardUnit" value="มหิดลสิทธาคาร"><label for="unit_sittha" class="btn-choice">มหิดลสิทธาคาร</label>
+                    <input type="radio" id="unit_mlc" name="guardUnit" value="ศูนย์การเรียนรู้มหิดล"><label for="unit_mlc" class="btn-choice">ศูนย์การเรียนรู้มหิดล</label>
+                    <input type="radio" id="unit_siree" name="guardUnit" value="โครงการจัดตั้งสถาบันอุทยานธรรมชาติวิทยาสิรีรุกขชาติ"><label for="unit_siree" class="btn-choice">โครงการจัดตั้งสถาบันอุทยานธรรมชาติวิทยาสิรีรุกขชาติ</label>
+                    <input type="radio" id="unit_dorm" name="guardUnit" value="หอพักนักศึกษา"><label for="unit_dorm" class="btn-choice">หอพักนักศึกษา</label>
+                    <input type="radio" id="unit_siriwittaya" name="guardUnit" value="อาคารสิริวิทยา"><label for="unit_siriwittaya" class="btn-choice">อาคารสิริวิทยา</label>
+                </div>
+
+                <label>ผลัดที่ปฏิบัติงาน:</label>
+                <div class="radio-group">
+                    <input type="radio" id="shift_day" name="guardShift" value="กลางวัน"><label for="shift_day" class="btn-choice">กลางวัน</label>
+                    <input type="radio" id="shift_night" name="guardShift" value="กลางคืน"><label for="shift_night" class="btn-choice">กลางคืน</label>
+                </div>
+                
+                <label>จุดที่ปฏิบัติงาน:</label>
+                <input type="text" id="guardDutyPoint" placeholder="เช่น ประตู 1, ป้อมหน้าอาคาร...">
+                
+                <div class="btn-row">
+                    <button type="button" class="btn-nav btn-back" onclick="navigateStep('step-guard-penalty', 'backward')">ย้อนกลับ</button>
+                    <button type="button" class="btn-nav btn-next" onclick="navigateStep('step-guard-penalty', 'forward')">ถัดไป</button>
+                </div>
+            </div>
+
+            <div class="form-step" id="step-3">
+                <div class="part-title" id="part3Title">พาร์ท 3: ข้อมูลผู้ได้รับบาดเจ็บ</div>
+                <label id="injuryQuestionLabel">มีผู้ได้รับบาดเจ็บ/ป่วย หรือไม่?</label>
+                <div class="radio-group">
+                    <input type="radio" id="inj_yes" name="hasInjury" value="มี" required>
+                    <label for="inj_yes" id="label_inj_yes" class="btn-choice">มีผู้ได้รับบาดเจ็บ</label>
+                    
+                    <input type="radio" id="inj_no" name="hasInjury" value="ไม่มี">
+                    <label for="inj_no" id="label_inj_no" class="btn-choice">ไม่มีผู้บาดเจ็บ</label>
+                </div>
+                <div class="btn-row">
+                    <button type="button" class="btn-nav btn-back" onclick="navigateStep('step-3', 'backward')">ย้อนกลับ</button>
+                    <button type="button" class="btn-nav btn-next" onclick="navigateStep('step-3', 'forward')">ถัดไป</button>
+                </div>
+            </div>
+
+            <div class="form-step" id="step-3-count">
+                <div class="part-title">ระบุจำนวนผู้บาดเจ็บ</div>
+                <label id="label_injuredCount">จำนวนคน (คน):</label>
+                <input type="number" id="injuredCount" min="1" placeholder="ระบุจำนวนตัวเลข">
+                <div class="btn-row">
+                    <button type="button" class="btn-nav btn-back" onclick="navigateStep('step-3-count', 'backward')">ย้อนกลับ</button>
+                    <button type="button" class="btn-nav btn-next" onclick="navigateStep('step-3-count', 'forward')">ถัดไป</button>
+                </div>
+            </div>
+
+            <div class="form-step" id="step-3-person">
+                <div class="part-title" id="personTitle" style="color: #000;">ข้อมูลผู้ได้รับบาดเจ็บคนที่ 1 / 1</div>
+                
+                <label id="label_injuredStatusTitle">ผู้บาดเจ็บเป็นใคร?</label>
+                <div class="radio-group">
+                    <input type="radio" id="status_student" name="injuredStatus" value="นักศึกษา"><label for="status_student" class="btn-choice">นักศึกษา</label>
+                    <input type="radio" id="status_staff" name="injuredStatus" value="บุคลากร"><label for="status_staff" class="btn-choice">บุคลากร</label>
+                    <input type="radio" id="status_outsource" name="injuredStatus" value="Outsource"><label for="status_outsource" class="btn-choice">Outsource</label>
+                    <input type="radio" id="status_outside" name="injuredStatus" value="บุคคลภายนอก"><label for="status_outside" class="btn-choice">บุคคลภายนอก</label>
+                </div>
+
+                <div id="statusFieldsSection" style="display:none; margin-top: 20px;">
+                    <div id="div_studentId" style="display:none;"><label>รหัสนักศึกษา:</label><input type="text" id="injuredStudentId" placeholder="ระบุรหัสนักศึกษา"></div>
+                    <div id="div_facultyDept" style="display:none;"><label id="label_facultyDept">คณะ/ส่วนงาน:</label><input type="text" id="injuredFacultyDept"></div>
+                    <div id="div_company" style="display:none;"><label>ชื่อบริษัท:</label><input type="text" id="injuredCompany" placeholder="ระบุชื่อบริษัท Outsource"></div>
+
+                    <label id="label_injuredName">ชื่อ-นามสกุล:</label><input type="text" id="injuredName">
+                    <label id="label_injuredPhone">เบอร์โทรศัพท์:</label><input type="tel" id="injuredPhone" placeholder="08x-xxx-xxxx">
+                    <label id="label_injuredSymptoms">อาการเบื้องต้น:</label><textarea id="injuredSymptoms" rows="3" placeholder="เช่น ถลอกแขนขวา, ศีรษะแตก"></textarea>
+                </div>
+
+                <div class="btn-row">
+                    <button type="button" class="btn-nav btn-back" onclick="navigateStep('step-3-person', 'backward')">ย้อนกลับ</button>
+                    <button type="button" class="btn-nav btn-next" onclick="navigateStep('step-3-person', 'forward')">ถัดไป</button>
+                </div>
+            </div>
+
+            <div class="form-step" id="step-4">
+                <div class="part-title">พาร์ท 4: ทรัพย์สินเสียหาย</div>
+                <label>มีทรัพย์สินเสียหายหรือไม่?</label>
+                <div class="radio-group">
+                    <input type="radio" id="prop_yes" name="propertyDamage" value="มี" required>
+                    <label for="prop_yes" class="btn-choice">มีทรัพย์สินเสียหาย</label>
+                    <input type="radio" id="prop_no" name="propertyDamage" value="ไม่มี">
+                    <label for="prop_no" class="btn-choice">ไม่มี</label>
+                </div>
+                <div id="propertyDamageSection" class="dynamic-section">
+                    <label>ระบุทรัพย์สินที่เสียหาย (เช่น เสาไฟ, ป้ายจราจร, รั้ว ฯลฯ):</label>
+                    <textarea id="propertyDamageDetails" rows="3" placeholder="ระบุรายละเอียดทรัพย์สินที่เสียหาย..."></textarea>
+                </div>
+                <div class="btn-row">
+                    <button type="button" class="btn-nav btn-back" onclick="navigateStep('step-4', 'backward')">ย้อนกลับ</button>
+                    <button type="button" class="btn-nav btn-next" onclick="navigateStep('step-4', 'forward')">ถัดไป</button>
+                </div>
+            </div>
+
+            <div class="form-step" id="step-5">
+                <div class="part-title" id="part5Title">พาร์ท 5: การรับส่งผู้ได้รับบาดเจ็บ</div>
+                <label>รถที่ใช้รับไปส่ง:</label>
+                <div class="radio-group">
+                    <input type="radio" id="trans_golf" name="transferMethod" value="รถกอล์ฟพยาบาล"><label for="trans_golf" class="btn-choice">รถกอล์ฟพยาบาล</label>
+                    <input type="radio" id="trans_kanpai30" name="transferMethod" value="รถกันภัย30"><label for="trans_kanpai30" class="btn-choice">รถกันภัย 30</label>
+                    <input type="radio" id="trans_car" name="transferMethod" value="รถยนต์ส่วนกลาง"><label for="trans_car" class="btn-choice">รถยนต์ส่วนกลาง</label>
+                    <input type="radio" id="trans_rescue" name="transferMethod" value="รถกู้ชีพ"><label for="trans_rescue" class="btn-choice">รถกู้ชีพ</label>
+                    <input type="radio" id="trans_ambu" name="transferMethod" value="รถโรงพยาบาล"><label for="trans_ambu" class="btn-choice">รถโรงพยาบาล</label>
+                    <input type="radio" id="trans_firstaid" name="transferMethod" value="ปฐมพยาบาลที่เกิดเหตุ"><label for="trans_firstaid" class="btn-choice">ปฐมพยาบาลที่เกิดเหตุ</label>
+                </div>
+                <div class="time-row" id="timeServiceSection">
+                    <div><label>เวลาที่รถเข้าถึงที่เกิดเหตุ:</label><input type="text" id="serviceArrivalTime" class="time-auto-format" placeholder="00:00" inputmode="numeric" maxlength="5"></div>
+                </div>
+                <div class="btn-row">
+                    <button type="button" class="btn-nav btn-back" onclick="navigateStep('step-5', 'backward')">ย้อนกลับ</button>
+                    <button type="button" class="btn-nav btn-next" onclick="navigateStep('step-5', 'forward')">ถัดไป</button>
+                </div>
+            </div>
+
+            <div class="form-step" id="step-6">
+                <div class="part-title" id="part6Title">พาร์ท 6: สถานที่ส่งรักษา</div>
+                <div id="destinationSection">
+                    <label>สถานที่ส่งรักษา:</label>
+                    <div class="radio-group">
+                        <input type="radio" id="dest_mu" name="destinationHospitalRadio" value="MU Health"><label for="dest_mu" class="btn-choice">MU Health</label>
+                        <input type="radio" id="dest_ert" name="destinationHospitalRadio" value="ERT"><label for="dest_ert" class="btn-choice">ERT</label>
+                        <input type="radio" id="dest_medical" name="destinationHospitalRadio" value="ศูนย์การแพทย์ฯ"><label for="dest_medical" class="btn-choice">ศูนย์การแพทย์ฯ (กาญจนาภิเษก)</label>
+                        <input type="radio" id="dest_phuttha" name="destinationHospitalRadio" value="โรงพยาบาลพุทธมณฑล"><label for="dest_phuttha" class="btn-choice">โรงพยาบาลพุทธมณฑล</label>
+                        <input type="radio" id="dest_other_radio" name="destinationHospitalRadio" value="สถานที่ส่งอื่นๆ"><label for="dest_other_radio" class="btn-choice">สถานที่ส่งอื่นๆ (โปรดระบุ)</label>
+                    </div>
+                    <input type="text" id="destinationHospitalOther" style="display:none;" placeholder="ระบุสถานที่ส่งอื่นๆ">
+                </div>
+                <div class="time-row">
+                    <div><label>เวลาที่ส่งถึงสถานพยาบาล:</label><input type="text" id="hospitalArrivalTime" class="time-auto-format" placeholder="00:00" inputmode="numeric" maxlength="5"></div>
+                </div>
+                <div class="btn-row">
+                    <button type="button" class="btn-nav btn-back" onclick="navigateStep('step-6', 'backward')">ย้อนกลับ</button>
+                    <button type="button" class="btn-nav btn-next" onclick="navigateStep('step-6', 'forward')">ถัดไป</button>
+                </div>
+            </div>
+
+            <div class="form-step" id="step-7">
+                <div class="part-title">พาร์ท 7: สาเหตุ ข้อมูลเพิ่มเติม และหลักฐาน</div>
+                <label id="label_incidentCause">สาเหตุของเหตุการณ์:</label>
+                <textarea id="incidentCause" rows="3" placeholder="ระบุสาเหตุของการเกิดเหตุ..."></textarea>
+                
+                <div id="penaltyAmountSection" style="display:none; margin-bottom: 20px;">
+                    <label>จำนวนเงินค่าปรับ (บาท):</label>
+                    <input type="number" id="penaltyAmount" min="0" placeholder="เช่น 500, 1000">
+                </div>
+
+                <label>รายละเอียดเหตุการณ์เพิ่มเติม:</label>
+                <textarea id="additionalDetails" rows="4" placeholder="กรอกข้อมูลอื่นๆ ที่เป็นประโยชน์เพิ่มเติม..."></textarea>
+                
+                <label>อัปโหลดภาพประกอบ (AI จะตรวจสอบและเบลอข้อมูลส่วนบุคคล):</label>
+                <input type="file" id="incidentImage" accept="image/*">
+                
+                <div style="margin-top: 10px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <label for="blurSizeRange" style="font-size: 0.9em; margin-bottom: 0;">ขนาดเบลอ:</label>
+                    <input type="range" id="blurSizeRange" min="20" max="400" value="100" style="cursor: pointer; width: 130px;">
+                    
+                    <button type="button" id="btnResetBlur" style="background: #ef4444; color: white; border: none; border-radius: 6px; padding: 6px 12px; font-family: inherit; font-size: 0.85em; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: 0.2s;">
+                        🗑️ ลบที่คลิกเบลอเอง
+                    </button>
+                </div>
+
+                <canvas id="imageCanvas" style="display:none; max-width: 100%; margin-top: 10px; border-radius:12px; cursor: crosshair;"></canvas>
+                <div class="btn-row">
+                    <button type="button" class="btn-nav btn-back" onclick="navigateStep('step-7', 'backward')">ย้อนกลับ</button>
+                    <button type="submit" id="submitBtn">ส่งรายงานข้อมูล</button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="config.js"></script>
+    <script src="ai_privacy.js"></script> 
+    <script src="voice_assistant.js"></script> 
+    <script src="report_guide.js"></script>
+    <script src="script.js"></script>
+    
+</body>
+</html>
