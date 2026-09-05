@@ -522,6 +522,8 @@ document.getElementById('incidentForm').addEventListener('submit', async functio
 
         // สร้างชุดข้อมูล formData ฉบับสมบูรณ์เพื่อส่งให้ API
         const formData = {
+            recorderName: getValue('recorderName'),
+            recorderPhone: getValue('recorderPhone'),
             reporterName: getValue('reporterName'),
             reporterPhone: getValue('reporterPhone'),
             reportedVia: finalReportedVia, 
@@ -605,14 +607,17 @@ async function fetchStaffList() {
         const res = await response.json();
         if (res.status === 'success') {
             staffList = res.data;
-            setupAutocomplete(document.getElementById("reporterName"), staffList);
+            // 🌟 นำ Autocomplete ไปใช้กับทั้งช่องผู้รายงาน และ ผู้แจ้ง พร้อมระบุ ID ช่องเบอร์โทรที่คู่กัน
+            setupAutocomplete(document.getElementById("recorderName"), staffList, "recorderPhone");
+            setupAutocomplete(document.getElementById("reporterName"), staffList, "reporterPhone");
         }
     } catch (error) {
         console.error("Error fetching staff list:", error);
     }
 }
 
-function setupAutocomplete(inp, arr) {
+// 🌟 เพิ่ม parameter: phoneInputId
+function setupAutocomplete(inp, arr, phoneInputId) { 
     if (!inp) return;
     
     const wrapper = document.createElement("div");
@@ -667,7 +672,8 @@ function setupAutocomplete(inp, arr) {
                     inp.value = this.getElementsByTagName("input")[0].value;
                     const phone = this.getElementsByTagName("input")[1].getAttribute("data-phone");
                     if (phone && phone !== '-') {
-                        document.getElementById("reporterPhone").value = phone;
+                        // 🌟 ดึงค่าเบอร์โทรไปใส่ในช่องที่กำหนด (recorderPhone หรือ reporterPhone)
+                        document.getElementById(phoneInputId).value = phone; 
                     }
                     closeAllLists();
                 });
