@@ -418,8 +418,10 @@ window.navigateStep = function(currentStepId, direction) {
 function initMap() {
     const mahidolSalaya = [13.7944, 100.3235]; 
     map = L.map('map').setView(mahidolSalaya, 15);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '© OpenStreetMap'
+    
+    // เปลี่ยนมาใช้ Tile Layer มาตรฐานของ OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
     map.on('click', function(e) {
